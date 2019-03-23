@@ -2,3 +2,4 @@ data/*
 .idea/
 .idea/*
 .idea/vcs.xml
+*/__pycache__/*
