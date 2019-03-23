@@ -4,7 +4,8 @@ import os
 
 from PIL import Image
 
-_path = "/Users/shiran.s/dev/DRIVE_data/data"
+dirname = os.path.dirname(__file__)
+_path_to_data_dir = os.path.join(dirname, '../data')
 
 
 def load_folder(path, is_train):
@@ -40,4 +41,4 @@ def load(path):
     print(len(x_test))
 
 
-load(_path)
+load(_path_to_data_dir)
