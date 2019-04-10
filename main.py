@@ -50,7 +50,7 @@ def main(_run):
 
     for i in range(1, args.num_epochs + 1):
         loss = train(i, model, training_data, optimizer, args)
-        print(loss)
+        print("loss in epoch %d is:" % i, loss)
 
 
 # def main():
