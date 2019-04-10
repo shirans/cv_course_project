@@ -12,7 +12,7 @@ class FC(nn.Module):
         stride = 1 # Stride of the convolution. Default: 1
         padding = 1 # Zero-padding added to both sides of the input. Default: 0
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
-        self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+        self.conv2 = nn.Conv2d(1, out_channels, kernel_size, stride, padding)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
