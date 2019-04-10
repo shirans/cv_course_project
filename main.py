@@ -9,7 +9,7 @@ from load_data import load_data
 
 from models.fc import FC
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 logging.getLogger().setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
