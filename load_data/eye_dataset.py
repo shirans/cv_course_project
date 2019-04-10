@@ -42,7 +42,7 @@ def make_dataset(folder):
     return samples
 
 
-class EyeLoader(Dataset):
+class EyeDataset(Dataset):
     def __init__(self, folder, augment=False):
         self.samples = make_dataset(folder)
         self.augment = augment
@@ -79,7 +79,7 @@ class EyeLoader(Dataset):
 
 
 if __name__ == '__main__':
-    a = EyeLoader('training')
+    a = EyeDataset('training')
     b = DataLoader(a)
     i, (image, mask, segmentation) = next(enumerate(b))
     print(segmentation.size())
