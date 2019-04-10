@@ -3,9 +3,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from sacred import Experiment
 from argparse import Namespace
-from loader import EyeLoader
+from load_data.eye_dataset import EyeDataset
 import logging
-from load_data import load_data
 
 from models.fc import FC
 
@@ -27,7 +26,7 @@ def cfg():
 def train(epoch, model, dataset, optimizer, args):
     total_loss = 0
     loss_func = nn.BCEWithLogitsLoss(reduction='none')
-    model.train()
+    model.train() # sets the model in training mode
     for i, (image, mask, segmentation) in enumerate(dataset):
         model.zero_grad()
         output = model(image)
@@ -44,7 +43,7 @@ def main(_run):
     args = Namespace(**_run.config)
     logger.info(args)
 
-    training_data = DataLoader(EyeLoader(args.data_path, augment=True), shuffle=True, batch_size=1)
+    training_data = DataLoader(EyeDataset(args.data_path, augment=True), shuffle=True, batch_size=1)
     model = FC()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
