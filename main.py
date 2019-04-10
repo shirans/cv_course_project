@@ -5,10 +5,13 @@ from sacred import Experiment
 from argparse import Namespace
 from loader import EyeLoader
 import logging
+from load_data import load_data
 
 from models.fc import FC
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 ex = Experiment('EyeSegnmentation')
@@ -17,7 +20,7 @@ ex.logger = logger
 
 @ex.config
 def cfg():
-    data_path = 'training'
+    data_path = 'data/drive/training'
     num_epochs = 30
 
 
@@ -48,3 +51,16 @@ def main(_run):
     for i in range(1, args.num_epochs + 1):
         loss = train(i, model, training_data, optimizer, args)
         print(loss)
+
+
+# def main():
+#     dirname = os.path.dirname(__file__)
+#     _path_to_data_dir = os.path.join(dirname, 'data')
+#     load_data.load(_path_to_data_dir)
+#
+#
+#     x = torch.rand(5, 3)
+#     print(x)
+#
+#
+# main()
