@@ -16,4 +16,4 @@ class FC(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
-        return F.sigmoid(self.conv2(x))
+        return self.conv2(x)

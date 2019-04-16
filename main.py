@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import os
 from torch.utils.data import DataLoader, SubsetRandomSampler
 import torchvision.transforms.functional as TF
@@ -26,7 +27,7 @@ ex.logger = logger
 @ex.config
 def cfg():
     data_path = 'data/drive/training'
-    num_epochs = 30
+    num_epochs = 300
 
 
 def loss_func(output, segmentation, mask):
@@ -91,10 +92,7 @@ def main(_run):
 
     # TEST
     for i, (image, mask, segmentation) in enumerate(test_data):
-        net_out = model(image)
-        print(net_out.data.numpy().shape())
-        TF.to_pil_image(net_out.data.numpy()).show()
-        net_out = net_out.data.numpy()
+        net_out = F.sigmoid(model(image))
 
         tag_results = nn.BCEWithLogitsLoss(reduction='none')(net_out, segmentation) * mask
         # print(net_out)
