@@ -46,12 +46,12 @@ def map_to_tensor(batch_size, x_test):
 
 def create_nn(batch_size=5, learning_rate=0.01, epochs=10,
               log_interval=10):
-    test_loader2, train_loader2 = load_mnist_data(batch_size)
+    # test_loader2, train_loader2 = load_mnist_data(batch_size)
     test_loader, train_loader = load_drive(batch_size)
 
     data_example = 'a'
     target_example = 'a'
-    for batch_idx, (data, target) in enumerate(test_loader2):
+    for batch_idx, (data, target) in enumerate(test_loader):
         if batch_idx == 0 :
             data_example = data
             target_example= target
