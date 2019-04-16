@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import os
 from torch.utils.data import DataLoader, SubsetRandomSampler
+import torchvision.transforms.functional as TF
 from sacred import Experiment
 from argparse import Namespace
 
@@ -70,8 +71,8 @@ def main(_run):
     valid_sampler = SubsetRandomSampler(val_indices)
 
     # training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
-    training_data = DataLoader(loader, batch_size=2, sampler=train_sampler)
-    test_data = DataLoader(loader, batch_size=2, sampler=valid_sampler)
+    training_data = DataLoader(loader, batch_size=1, sampler=train_sampler)
+    test_data = DataLoader(loader, batch_size=1, sampler=valid_sampler)
     model = FC()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
@@ -91,5 +92,9 @@ def main(_run):
     # TEST
     for i, (image, mask, segmentation) in enumerate(test_data):
         net_out = model(image)
+        print(net_out.data.numpy().shape())
+        TF.to_pil_image(net_out.data.numpy()).show()
+        net_out = net_out.data.numpy()
+
         tag_results = nn.BCEWithLogitsLoss(reduction='none')(net_out, segmentation) * mask
-        print(net_out)
+        # print(net_out)
