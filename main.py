@@ -1,18 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os
 from torch.utils.data import DataLoader, SubsetRandomSampler
-import torchvision.transforms.functional as TF
 from sacred import Experiment
 from argparse import Namespace
+from torchvision import transforms
 
 from analysis import plot_loss
 from load_data.eye_dataset import EyeDataset
 import logging
 import numpy as np
-from load_data import load_data
-
 from models.fc import FC
 
 logging.basicConfig(level=logging.DEBUG)
@@ -28,6 +25,8 @@ ex.logger = logger
 def cfg():
     data_path = 'data/drive/training'
     num_epochs = 300
+    batch_size = 2
+    plot_loss = False
 
 
 def loss_func(output, segmentation, mask):
@@ -39,9 +38,12 @@ def loss_func(output, segmentation, mask):
 def train(epoch, model, dataset, optimizer, args):
     total_loss = 0
     model.train()  # sets the model in training mode
-    for i, (image, mask, segmentation) in enumerate(dataset):
+    for i, (image_batch, mask, segmentation) in enumerate(dataset):
+        # if you want to see the images and the segmentation
+        # transforms.ToPILImage(mode='RGB')(image_batch[0, :, :, :]).show()
+        # transforms.ToPILImage(mode='L')(segmentation[0, :, :, :]).show()
         model.zero_grad()
-        output = model(image)
+        output = model(image_batch)
         loss = loss_func(output, segmentation, mask)
         loss.backward()
         total_loss += loss.item()
@@ -50,12 +52,7 @@ def train(epoch, model, dataset, optimizer, args):
     return total_loss
 
 
-@ex.automain
-def main(_run):
-    args = Namespace(**_run.config)
-    logger.info(args)
-
-    loader = EyeDataset(args.data_path, augment=True)
+def split_dataset_to_train_and_test(loader, batch_size):
     validation_split = .2
     dataset_size = len(loader)
     indices = list(range(dataset_size))
@@ -69,11 +66,22 @@ def main(_run):
     train_indices, val_indices = indices[split:], indices[:split]
 
     train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(val_indices)
+    test_sampler = SubsetRandomSampler(val_indices)
 
+    training_data = DataLoader(loader, batch_size=batch_size, sampler=train_sampler)
+    test_data = DataLoader(loader, batch_size=batch_size, sampler=test_sampler)
+    return training_data, test_data
+
+
+@ex.automain
+def main(_run):
+    args = Namespace(**_run.config)
+    logger.info(args)
+
+    loader = EyeDataset(args.data_path, augment=True)
     # training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
-    training_data = DataLoader(loader, batch_size=1, sampler=train_sampler)
-    test_data = DataLoader(loader, batch_size=1, sampler=valid_sampler)
+    training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
+
     model = FC()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
@@ -84,15 +92,19 @@ def main(_run):
         loss_history.append(loss)
         print("loss in epoch %d is:" % i, loss)
 
-    stats = {'loss_history': loss_history}
-
-    plot_loss(stats)
-    total_loss = 0
+    if args.plot_loss:
+        stats = {'loss_history': loss_history}
+        plot_loss(stats)
 
 
     # TEST
-    for i, (image, mask, segmentation) in enumerate(test_data):
-        net_out = F.sigmoid(model(image))
-
-        tag_results = nn.BCEWithLogitsLoss(reduction='none')(net_out, segmentation) * mask
-        # print(net_out)
+    for i, (image_batch, mask, segmentation) in enumerate(test_data):
+        net_out = F.sigmoid(model(image_batch))
+        for i in range(0, image_batch.shape[0]):
+            image = net_out[i, :, :, :]
+            network_predict = torch.round(torch.add(net_out, 0.5))
+            if network_predict.min() == network_predict.max():
+                print("all image values are is the same:", network_predict.min())
+            else:
+                transforms.ToPILImage(mode='L')(image).show()
+                transforms.ToPILImage(mode='L')(segmentation[i, :, :, :]).show()
