@@ -10,6 +10,9 @@ from analysis import plot_loss
 from load_data.eye_dataset import EyeDataset
 import logging
 import numpy as np
+
+from models.FC_UNET import FC_UNET
+from models.FC_UNET_2 import CleanU_Net
 from models.fc import FC
 
 logging.basicConfig(level=logging.DEBUG)
@@ -24,9 +27,9 @@ ex.logger = logger
 @ex.config
 def cfg():
     data_path = 'data/drive/training'
-    num_epochs = 300
-    batch_size = 2
-    plot_loss = False
+    num_epochs = 30
+    batch_size = 4
+    plot_loss = True
 
 
 def loss_func(output, segmentation, mask):
@@ -82,7 +85,7 @@ def main(_run):
     # training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
     training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
 
-    model = FC()
+    model = FC_UNET()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     loss_history = []
@@ -102,6 +105,7 @@ def main(_run):
         net_out = F.sigmoid(model(image_batch))
         for i in range(0, image_batch.shape[0]):
             image = net_out[i, :, :, :]
+            # I want to get 0 for <0.5 and 1 for >=0.5
             network_predict = torch.round(torch.add(net_out, 0.5))
             if network_predict.min() == network_predict.max():
                 print("all image values are is the same:", network_predict.min())
