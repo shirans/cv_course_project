@@ -24,6 +24,8 @@ ex.logger = logger
 @ex.config
 def cfg():
     data_path = 'data/drive/training'
+    data_path_training = 'data/drive_seperated/training'
+    data_path_validation = 'data/drive_seperated/validation'
     num_epochs = 300
     batch_size = 2
     plot_loss = False
@@ -73,14 +75,38 @@ def split_dataset_to_train_and_test(loader, batch_size):
     return training_data, test_data
 
 
+def save_model(args, epoch, mm, id, text='rmse'):
+    state = {
+        'epoch': epoch,
+        'args': args,
+        'state_dict': mm.state_dict(),
+    }
+    with open(os.path.join(checkpoint_path, '{}'.format(id),
+                           'model_{}.t7'.format(text)),
+              'wb') as f:
+        torch.save(state, f)
+
+    return
+
 @ex.automain
 def main(_run):
     args = Namespace(**_run.config)
     logger.info(args)
 
-    loader = EyeDataset(args.data_path, augment=True)
-    # training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
-    training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
+    # ------ Michals modification: split train and validation in advance ------ #
+    # train and validation images should be placed in args.data_path_training and args.data_path_validation
+    # last 4 images (#37-40) are used as validation
+    loader_train = EyeDataset(args.data_path_training, augment=True)
+    loader_val = EyeDataset(args.data_path_validation, augment=True)
+
+    #loader = EyeDataset(args.data_path, augment=True)
+    ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
+    #training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
+
+    training_data = DataLoader(loader_train, batch_size=args.batch_size)
+    test_data = DataLoader(loader_val, batch_size=args.batch_size)
+    # ------------------------------------------------------------------------- #
+
 
     model = FC()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
