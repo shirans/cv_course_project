@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,7 +8,7 @@ from argparse import Namespace
 from torchvision import transforms
 
 from analysis import plot_loss
-from load_data.eye_dataset import EyeDataset
+from load_data.eye_dataset import EyeDataset, EyeDatasetOverfitCorners, EyeDatasetOverfitCenter
 import logging
 import numpy as np
 from models.fc import FC
@@ -24,11 +25,11 @@ ex.logger = logger
 @ex.config
 def cfg():
     data_path = 'data/drive/training'
-    data_path_training = 'data/drive_seperated/training'
-    data_path_validation = 'data/drive_seperated/validation'
-    num_epochs = 300
-    batch_size = 2
-    plot_loss = False
+    data_path_training = 'data/drive/training'
+    data_path_validation = 'data/drive/validation'
+    num_epochs = 500
+    batch_size = 1
+    plot_loss = True
 
 
 def loss_func(output, segmentation, mask):
@@ -96,8 +97,8 @@ def main(_run):
     # ------ Michals modification: split train and validation in advance ------ #
     # train and validation images should be placed in args.data_path_training and args.data_path_validation
     # last 4 images (#37-40) are used as validation
-    loader_train = EyeDataset(args.data_path_training, augment=True)
-    loader_val = EyeDataset(args.data_path_validation, augment=True)
+    loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True)
+    loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=True)
 
     #loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
@@ -124,11 +125,13 @@ def main(_run):
 
 
     # TEST
-    for i, (image_batch, mask, segmentation) in enumerate(test_data):
-        net_out = F.sigmoid(model(image_batch))
+    print("start segmentation on test")
+    for i, (image_batch, mask, segmentation) in enumerate(training_data):
+        net_out = model(image_batch)
+        net_out = F.sigmoid(net_out)
         for i in range(0, image_batch.shape[0]):
             image = net_out[i, :, :, :]
-            network_predict = torch.round(torch.add(net_out, 0.5))
+            network_predict = torch.round(net_out)
             if network_predict.min() == network_predict.max():
                 print("all image values are is the same:", network_predict.min())
             else:
