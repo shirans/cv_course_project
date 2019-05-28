@@ -6,8 +6,6 @@ from torch.utils.data import DataLoader
 import os
 from pathlib import Path
 import re
-from torchvision.datasets import DatasetFolder
-from torchvision.transforms import ToTensor
 from PIL import Image
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
@@ -125,7 +123,8 @@ class EyeDatasetOverfitCorners(Dataset):
         return len(self.samples)
 
 class EyeDatasetOverfitCenter(Dataset):
-    def __init__(self, folder, augment=False):
+    def __init__(self, folder, augment=False, normalization=True):
+        self.normalization = normalization
         self.samples = make_dataset(folder)
         self.augment = augment
         self.crop = transforms.CenterCrop(128)
@@ -154,8 +153,13 @@ class EyeDatasetOverfitCenter(Dataset):
                 mask = TF.hflip(mask)
                 segmentation = TF.hflip(segmentation)
 
-
-        return TF.to_tensor(image), TF.to_tensor(mask), TF.to_tensor(segmentation)
+        tensor = TF.to_tensor(image)
+        if self.augment:
+            tmean = tensor.mean()
+            tstd = tensor.std()
+            normalize = transforms.Normalize(mean=[tmean],std=[tstd])
+            tensor = normalize(tensor)
+        return tensor, TF.to_tensor(mask), TF.to_tensor(segmentation)
 
     def __len__(self):
         return len(self.samples)

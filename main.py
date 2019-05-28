@@ -27,7 +27,7 @@ def cfg():
     data_path = 'data/drive/training'
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
-    num_epochs = 500
+    num_epochs = 3
     batch_size = 1
     plot_loss = True
 
@@ -97,17 +97,16 @@ def main(_run):
     # ------ Michals modification: split train and validation in advance ------ #
     # train and validation images should be placed in args.data_path_training and args.data_path_validation
     # last 4 images (#37-40) are used as validation
-    loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True)
-    loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=True)
+    loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
+    loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=True, normalization=True)
 
-    #loader = EyeDataset(args.data_path, augment=True)
+    # loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
-    #training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
+    # training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
 
     training_data = DataLoader(loader_train, batch_size=args.batch_size)
     test_data = DataLoader(loader_val, batch_size=args.batch_size)
     # ------------------------------------------------------------------------- #
-
 
     model = FC()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -123,9 +122,9 @@ def main(_run):
         stats = {'loss_history': loss_history}
         plot_loss(stats)
 
-
     # TEST
     print("start segmentation on test")
+    num_images = 0
     for i, (image_batch, mask, segmentation) in enumerate(training_data):
         net_out = model(image_batch)
         net_out = F.sigmoid(net_out)
@@ -134,6 +133,7 @@ def main(_run):
             network_predict = torch.round(net_out)
             if network_predict.min() == network_predict.max():
                 print("all image values are is the same:", network_predict.min())
-            else:
+            if num_images % 10 == 0:
                 transforms.ToPILImage(mode='L')(image).show()
                 transforms.ToPILImage(mode='L')(segmentation[i, :, :, :]).show()
+            num_images = num_images + 1
