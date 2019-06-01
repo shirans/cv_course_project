@@ -1,4 +1,5 @@
 data/*
+checkpoints/*
 .idea/
 .idea/*
 .idea/vcs.xml

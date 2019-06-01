@@ -1,4 +1,6 @@
 import os
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,6 +14,7 @@ from load_data.eye_dataset import EyeDataset, EyeDatasetOverfitCorners, EyeDatas
 import logging
 import numpy as np
 from models.fc import FC
+import pandas as pd
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger().setLevel(logging.INFO)
@@ -27,15 +30,35 @@ def cfg():
     data_path = 'data/drive/training'
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
-    num_epochs = 3
+    num_epochs = 10000
     batch_size = 1
     plot_loss = True
+    checkpoint_path = 'checkpoints/v1'
+    is_save_model = False
+    # model_load_path = None
+    model_load_path = 'checkpoints/v1/20190601-170049'
+    display_images = True
 
 
 def loss_func(output, segmentation, mask):
     loss_func = nn.BCEWithLogitsLoss(reduction='none')
     loss_results = loss_func(output, segmentation)
     return (loss_results * mask).mean()
+
+
+def train_model(args, model, training_data):
+    logger.info("training model")
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    loss_history = []
+    for i in range(1, args.num_epochs + 1):
+        loss = train(i, model, training_data, optimizer, args)
+        loss_history.append(loss)
+        print("loss in epoch %d is:" % i, loss)
+    if args.plot_loss:
+        stats = {'loss_history': loss_history}
+        plot_loss(stats)
+    if args.is_save_model:
+        save_model(args, args.num_epochs, model)
 
 
 def train(epoch, model, dataset, optimizer, args):
@@ -76,18 +99,28 @@ def split_dataset_to_train_and_test(loader, batch_size):
     return training_data, test_data
 
 
-def save_model(args, epoch, mm, id, text='rmse'):
-    state = {
-        'epoch': epoch,
-        'args': args,
-        'state_dict': mm.state_dict(),
-    }
-    with open(os.path.join(checkpoint_path, '{}'.format(id),
-                           'model_{}.t7'.format(text)),
-              'wb') as f:
-        torch.save(state, f)
+def save_model(args, epoch, model):
+    state = model.state_dict()
+    logger.info("saving model to path:", )
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    path = os.path.join(args.checkpoint_path,
+                        '{}'.format(timestr))
+    torch.save(state, path)
 
-    return
+
+def choose_model(args, training_data):
+    path = args.model_load_path
+    if path is None:
+        logger.info("creating a new model")
+        model = FC()
+        train_model(args, model, training_data)
+        return model
+    logger.info("loading model from path: {}".format(path))
+    model = FC()
+    load = torch.load(path)
+    model.load_state_dict(load)
+    return model
+
 
 @ex.automain
 def main(_run):
@@ -108,20 +141,7 @@ def main(_run):
     test_data = DataLoader(loader_val, batch_size=args.batch_size)
     # ------------------------------------------------------------------------- #
 
-    model = FC()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-
-    loss_history = []
-
-    for i in range(1, args.num_epochs + 1):
-        loss = train(i, model, training_data, optimizer, args)
-        loss_history.append(loss)
-        print("loss in epoch %d is:" % i, loss)
-
-    if args.plot_loss:
-        stats = {'loss_history': loss_history}
-        plot_loss(stats)
-
+    model = choose_model(args, training_data)
     # TEST
     print("start segmentation on test")
     num_images = 0
@@ -130,10 +150,41 @@ def main(_run):
         net_out = F.sigmoid(net_out)
         for i in range(0, image_batch.shape[0]):
             image = net_out[i, :, :, :]
-            network_predict = torch.round(net_out)
-            if network_predict.min() == network_predict.max():
-                print("all image values are is the same:", network_predict.min())
-            if num_images % 10 == 0:
+            if image[image > 0.5].size()[0] == 0:
+                print("all image values are below 0.5")
+            else:
+                image_np = image.data.numpy()
+                new_shape = (image_np.shape[1], image_np.shape[2])
+                total_elements = new_shape[0] * new_shape[1]
+                # reshape from (1, 128, 128 ) to (128,128)
+                image_np = image_np.reshape(new_shape)
+                # if value > 0.5 category is 1 else 0
+                image_np = np.where(image_np > 0.5, 1, 0)
+
+                seg_np = segmentation[i, :, :, :].data.numpy().reshape(new_shape)
+                # all indexes in which prediction is correct
+                equality = image_np == seg_np
+                sum_equals = np.sum(equality)
+
+                # correct prediction by category
+                count_ones_true = ((image_np == 1) & (equality)).sum()
+                count_zero_true = ((image_np == 0) & (equality)).sum()
+                truth_set = np.bincount(seg_np.reshape(128 * 128).astype(int))
+
+                expected_zeros = truth_set[0]
+                expected_ones = truth_set[1]
+                #  sanity check
+                if ((count_zero_true + count_ones_true > total_elements)
+                        or (expected_zeros + expected_zeros == total_elements)
+                        or (count_ones_true > expected_ones)
+                        or (count_zero_true > expected_zeros)):
+                    print("error in calculation")
+                print("prediction success total {}, zeros {}, ones: {}".format(
+                    sum_equals / (new_shape[0] * new_shape[1])
+                    , count_zero_true / expected_zeros,
+                    count_ones_true / expected_ones))
+
+            if num_images % 10 == 0 and args.display_images:
                 transforms.ToPILImage(mode='L')(image).show()
                 transforms.ToPILImage(mode='L')(segmentation[i, :, :, :]).show()
             num_images = num_images + 1
