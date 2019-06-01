@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 
-class unet(nn.Module):
+class UNET(nn.Module):
     def __init__(self):
-        super(unet, self).__init__()
+        super(UNET, self).__init__()
 
         # Input Tensor Dimensions = 256x256x3
         # Convolution 1

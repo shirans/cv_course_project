@@ -14,7 +14,7 @@ from load_data.eye_dataset import EyeDataset, EyeDatasetOverfitCorners, EyeDatas
 import logging
 import numpy as np
 from models.fc import FC
-import pandas as pd
+from models.unet import UNET
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger().setLevel(logging.INFO)
@@ -30,13 +30,13 @@ def cfg():
     data_path = 'data/drive/training'
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
-    num_epochs = 10000
+    num_epochs = 1000
     batch_size = 1
     plot_loss = True
     checkpoint_path = 'checkpoints/v1'
-    is_save_model = False
-    # model_load_path = None
-    model_load_path = 'checkpoints/v1/20190601-170049'
+    is_save_model = True
+    model_load_path = None
+    # model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
     display_images = True
 
 
@@ -99,6 +99,38 @@ def split_dataset_to_train_and_test(loader, batch_size):
     return training_data, test_data
 
 
+def evaluate_image(i, image, segmentation):
+    image_np = image.data.numpy()
+    new_shape = (image_np.shape[1], image_np.shape[2])
+    total_elements = new_shape[0] * new_shape[1]
+    # reshape from (1, 128, 128 ) to (128,128)
+    image_np = image_np.reshape(new_shape)
+    # if value > 0.5 category is 1 else 0
+    image_np = np.where(image_np > 0.5, 1, 0)
+    seg_np = segmentation[i, :, :, :].data.numpy().reshape(new_shape)
+    # all indexes in which prediction is correct
+    equality = image_np == seg_np
+    sum_equals = np.sum(equality)
+    # correct prediction by category
+    count_ones_true = ((image_np == 1) & (equality)).sum()
+    count_zero_true = ((image_np == 0) & (equality)).sum()
+    truth_set = np.bincount(seg_np.reshape(128 * 128).astype(int))
+    expected_zeros = truth_set[0]
+    expected_ones = truth_set[1]
+    #  sanity check
+    if ((count_zero_true + count_ones_true > total_elements)
+            or (expected_zeros + expected_zeros == total_elements)
+            or (count_ones_true > expected_ones)
+            or (count_zero_true > expected_zeros)):
+        print("error in calculation")
+    success_all = sum_equals / (new_shape[0] * new_shape[1])
+    sucecss_zeros = count_zero_true / expected_zeros
+    success_ones = count_ones_true / expected_ones
+    # print("prediction success total {}, zeros {}, ones: {}".format(
+    #     success_all, sucecss_zeros, success_ones))
+    return success_all, sucecss_zeros, success_ones
+
+
 def save_model(args, epoch, model):
     state = model.state_dict()
     logger.info("saving model to path:", )
@@ -130,8 +162,8 @@ def main(_run):
     # ------ Michals modification: split train and validation in advance ------ #
     # train and validation images should be placed in args.data_path_training and args.data_path_validation
     # last 4 images (#37-40) are used as validation
-    loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
-    loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=True, normalization=True)
+    loader_train = EyeDataset(args.data_path_training, augment=True, normalization=True)
+    loader_val = EyeDataset(args.data_path_validation, augment=True, normalization=True)
 
     # loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
@@ -145,6 +177,9 @@ def main(_run):
     # TEST
     print("start segmentation on test")
     num_images = 0
+    results = []
+    results_zero = []
+    results_one = []
     for i, (image_batch, mask, segmentation) in enumerate(training_data):
         net_out = model(image_batch)
         net_out = F.sigmoid(net_out)
@@ -152,39 +187,13 @@ def main(_run):
             image = net_out[i, :, :, :]
             if image[image > 0.5].size()[0] == 0:
                 print("all image values are below 0.5")
-            else:
-                image_np = image.data.numpy()
-                new_shape = (image_np.shape[1], image_np.shape[2])
-                total_elements = new_shape[0] * new_shape[1]
-                # reshape from (1, 128, 128 ) to (128,128)
-                image_np = image_np.reshape(new_shape)
-                # if value > 0.5 category is 1 else 0
-                image_np = np.where(image_np > 0.5, 1, 0)
-
-                seg_np = segmentation[i, :, :, :].data.numpy().reshape(new_shape)
-                # all indexes in which prediction is correct
-                equality = image_np == seg_np
-                sum_equals = np.sum(equality)
-
-                # correct prediction by category
-                count_ones_true = ((image_np == 1) & (equality)).sum()
-                count_zero_true = ((image_np == 0) & (equality)).sum()
-                truth_set = np.bincount(seg_np.reshape(128 * 128).astype(int))
-
-                expected_zeros = truth_set[0]
-                expected_ones = truth_set[1]
-                #  sanity check
-                if ((count_zero_true + count_ones_true > total_elements)
-                        or (expected_zeros + expected_zeros == total_elements)
-                        or (count_ones_true > expected_ones)
-                        or (count_zero_true > expected_zeros)):
-                    print("error in calculation")
-                print("prediction success total {}, zeros {}, ones: {}".format(
-                    sum_equals / (new_shape[0] * new_shape[1])
-                    , count_zero_true / expected_zeros,
-                    count_ones_true / expected_ones))
-
+            success_all, success_zero, success_ones = evaluate_image(i, image, segmentation)
+            results.append(success_all)
+            results_zero.append(success_zero)
+            results_one.append(success_ones)
             if num_images % 10 == 0 and args.display_images:
                 transforms.ToPILImage(mode='L')(image).show()
                 transforms.ToPILImage(mode='L')(segmentation[i, :, :, :]).show()
             num_images = num_images + 1
+    print("prediction success total {}, zeros {}, ones: {}".format(
+        np.average(results), np.average(results_zero), np.average(results_one)))

@@ -19,6 +19,13 @@ def pil_loader(path):
         return img.convert('RGB')
 
 
+def normalize(tensor):
+    tmean = tensor.mean()
+    tstd = tensor.std()
+    norm = transforms.Normalize(mean=[tmean], std=[tstd])
+    return norm(tensor)
+
+
 def make_dataset(folder):
     masks = Path(folder).glob('mask/**/*.gif')
     raw = Path(folder).glob('images/**/*.tif')
@@ -43,7 +50,8 @@ def make_dataset(folder):
 
 
 class EyeDataset(Dataset):
-    def __init__(self, folder, augment=False):
+    def __init__(self, folder, augment=False, normalization=True):
+        self.normalization = normalization
         self.samples = make_dataset(folder)
         self.augment = augment
 
@@ -72,7 +80,10 @@ class EyeDataset(Dataset):
                 mask = TF.hflip(mask)
                 segmentation = TF.hflip(segmentation)
 
-        return TF.to_tensor(image), TF.to_tensor(mask), TF.to_tensor(segmentation)
+        tensor = TF.to_tensor(image)
+        if self.normalization:
+            tensor = normalize(tensor)
+        return tensor, TF.to_tensor(mask), TF.to_tensor(segmentation)
 
     def __len__(self):
         return len(self.samples)
@@ -94,7 +105,7 @@ class EyeDatasetOverfitCorners(Dataset):
         segmentation = TF.to_grayscale(pil_loader(segmentation_path))
 
         itl, itr, ibl, ibr, ic = self.crop(image)
-        image_crops = [itl, itr ,ibl, ibr, ic]
+        image_crops = [itl, itr, ibl, ibr, ic]
         mtl, mtr, mbl, mbr, mc = self.crop(mask)
         mask_crops = [mtl, mtr, mbl, mbr, mc]
         stl, str, sbl, sbr, sc = self.crop(segmentation)
@@ -116,11 +127,11 @@ class EyeDatasetOverfitCorners(Dataset):
                 mask = TF.hflip(mask)
                 segmentation = TF.hflip(segmentation)
 
-
         return TF.to_tensor(image), TF.to_tensor(mask), TF.to_tensor(segmentation)
 
     def __len__(self):
         return len(self.samples)
+
 
 class EyeDatasetOverfitCenter(Dataset):
     def __init__(self, folder, augment=False, normalization=True):
@@ -138,7 +149,7 @@ class EyeDatasetOverfitCenter(Dataset):
         mask = TF.to_grayscale(pil_loader(mask_path))
         segmentation = TF.to_grayscale(pil_loader(segmentation_path))
 
-        image= plus_crop(image, 128)
+        image = plus_crop(image, 128)
         mask = plus_crop(mask, 128)
         segmentation = plus_crop(segmentation, 128)
 
@@ -154,10 +165,7 @@ class EyeDatasetOverfitCenter(Dataset):
                 segmentation = TF.hflip(segmentation)
 
         tensor = TF.to_tensor(image)
-        if self.augment:
-            tmean = tensor.mean()
-            tstd = tensor.std()
-            normalize = transforms.Normalize(mean=[tmean],std=[tstd])
+        if self.normalization:
             tensor = normalize(tensor)
         return tensor, TF.to_tensor(mask), TF.to_tensor(segmentation)
 
@@ -173,6 +181,7 @@ def plus_crop(img, output_size):
     i = int(round((h - th) / 4.))
     j = int(round((w - tw) / 4.))
     return TF.crop(img, i, j, th, tw)
+
 
 if __name__ == '__main__':
     a = EyeDataset('training')
