@@ -31,6 +31,7 @@ def cfg():
     data_path = 'data/drive/training'
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
+    data_path_test = 'data/drive/test'
     num_epochs = 10000
     batch_size = 1
     plot_loss = True
@@ -156,6 +157,7 @@ def choose_model(args, training_data):
     model.load_state_dict(load)
     return model
 
+
 def evaluate_results(args, model, data):
     num_images = 0
     results = []
@@ -173,7 +175,7 @@ def evaluate_results(args, model, data):
             results.append(success_all)
             results_zero.append(success_zero)
             results_one.append(success_ones)
-            if num_images % int(total_images/2) == 1 and args.display_images:
+            if num_images % int(total_images / 2) == 1 and args.display_images:
                 fig = plt.figure()
                 a = fig.add_subplot(1, 2, 1)
                 im_pred = transforms.ToPILImage(mode='L')(prediction)
@@ -187,8 +189,9 @@ def evaluate_results(args, model, data):
                 a.set_title('Segmentation')
                 plt.colorbar(ticks=[0.1, 0.3, 0.5, 0.7], orientation='horizontal')
 
-                plt.show()
+                plt.show(block=False)
             num_images = num_images + 1
+    plt.show()
     print("prediction success total {}, zeros {}, ones: {}".format(
         np.average(results), np.average(results_zero), np.average(results_one)))
 
@@ -203,17 +206,22 @@ def main(_run):
     # last 4 images (#37-40) are used as validation
     loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
     loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=True, normalization=True)
+    loader_test = EyeDatasetOverfitCenter(args.data_path_test, augment=True, normalization=True)
 
     # loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
     # training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
 
     training_data = DataLoader(loader_train, batch_size=args.batch_size)
+    validatoin_data = DataLoader(loader_val, batch_size=args.batch_size)
     test_data = DataLoader(loader_val, batch_size=args.batch_size)
     # ------------------------------------------------------------------------- #
 
     model = choose_model(args, training_data)
     # TEST
     print("evaluate on training data")
+    evaluate_results(args, model, training_data)
+    print("evaluate on validation data")
+    evaluate_results(args, model, validatoin_data)
+    print("evaluate on test data")
     evaluate_results(args, model, test_data)
-
