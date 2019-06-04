@@ -214,7 +214,7 @@ def main(_run):
 
     training_data = DataLoader(loader_train, batch_size=args.batch_size)
     validatoin_data = DataLoader(loader_val, batch_size=args.batch_size)
-    test_data = DataLoader(loader_val, batch_size=args.batch_size)
+    test_data = DataLoader(loader_test, batch_size=args.batch_size)
     # ------------------------------------------------------------------------- #
 
     model = choose_model(args, training_data)
@@ -223,5 +223,5 @@ def main(_run):
     evaluate_results(args, model, training_data)
     print("evaluate on validation data")
     evaluate_results(args, model, validatoin_data)
-    print("evaluate on test data")
-    evaluate_results(args, model, test_data)
+    # print("evaluate on test data")
+    # evaluate_results(args, model, test_data)
