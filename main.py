@@ -100,20 +100,20 @@ def split_dataset_to_train_and_test(loader, batch_size):
 
 
 def evaluate_image(i, prediction, segmentation, mask):
-    image_np = prediction.data.numpy()
-    new_shape = (image_np.shape[1], image_np.shape[2])
+    prediction_np = prediction.data.numpy()
+    new_shape = (prediction_np.shape[1], prediction_np.shape[2])
     total_elements = new_shape[0] * new_shape[1]
     # reshape from (1, 128, 128 ) to (128,128)
-    image_np = image_np.reshape(new_shape)
+    prediction_np = prediction_np.reshape(new_shape)
     # if value > 0.5 category is 1 else 0
-    image_np = np.where(image_np > 0.5, 1, 0)
+    prediction_np = np.where(prediction_np > 0.5, 1, 0)
     seg_np = segmentation[i, :, :, :].data.numpy().reshape(new_shape)
     # all indexes in which prediction is correct
-    equality = image_np == seg_np
+    equality = prediction_np == seg_np
     sum_equals = np.sum(equality)
     # correct prediction by category
-    count_ones_true = ((image_np == 1) & (equality)).sum()
-    count_zero_true = ((image_np == 0) & (equality)).sum()
+    count_ones_true = ((prediction_np == 1) & (equality)).sum()
+    count_zero_true = ((prediction_np == 0) & (equality)).sum()
     truth_set = np.bincount(seg_np.reshape(128 * 128).astype(int))
     expected_zeros = truth_set[0]
     expected_ones = truth_set[1]
