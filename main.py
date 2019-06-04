@@ -30,13 +30,13 @@ def cfg():
     data_path = 'data/drive/training'
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
-    num_epochs = 1000
+    num_epochs = 10000
     batch_size = 1
     plot_loss = True
     checkpoint_path = 'checkpoints/v1'
     is_save_model = False
-    # model_load_path = None
-    model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
+    model_load_path = None
+    # model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
     display_images = True
 
 
@@ -99,8 +99,8 @@ def split_dataset_to_train_and_test(loader, batch_size):
     return training_data, test_data
 
 
-def evaluate_image(i, image, segmentation, mask):
-    image_np = image.data.numpy()
+def evaluate_image(i, prediction, segmentation, mask):
+    image_np = prediction.data.numpy()
     new_shape = (image_np.shape[1], image_np.shape[2])
     total_elements = new_shape[0] * new_shape[1]
     # reshape from (1, 128, 128 ) to (128,128)
@@ -144,7 +144,7 @@ def choose_model(args, training_data):
     path = args.model_load_path
     if path is None:
         logger.info("creating a new model")
-        model = FC()
+        model = UNET()
         train_model(args, model, training_data)
         return model
     logger.info("loading model from path: {}".format(path))
@@ -180,19 +180,19 @@ def main(_run):
     results = []
     results_zero = []
     results_one = []
-    for i, (image_batch, mask, segmentation) in enumerate(training_data):
+    for i, (image_batch, mask, segmentation) in enumerate(test_data):
         net_out = model(image_batch)
         net_out = F.sigmoid(net_out)
         for i in range(0, image_batch.shape[0]):
-            image = net_out[i, :, :, :]
-            if image[image > 0.5].size()[0] == 0:
+            prediction = net_out[i, :, :, :]
+            if prediction[prediction > 0.5].size()[0] == 0:
                 print("all image values are below 0.5")
-            success_all, success_zero, success_ones = evaluate_image(i, image, segmentation, mask[i,:,:,:])
+            success_all, success_zero, success_ones = evaluate_image(i, prediction, segmentation, mask[i,:,:,:])
             results.append(success_all)
             results_zero.append(success_zero)
             results_one.append(success_ones)
             if num_images % 10 == 0 and args.display_images:
-                transforms.ToPILImage(mode='L')(image).show()
+                transforms.ToPILImage(mode='L')(prediction).show()
                 transforms.ToPILImage(mode='L')(segmentation[i, :, :, :]).show()
             num_images = num_images + 1
     print("prediction success total {}, zeros {}, ones: {}".format(
