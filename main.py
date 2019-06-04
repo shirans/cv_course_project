@@ -117,12 +117,14 @@ def evaluate_image(i, prediction, segmentation, mask):
     truth_set = np.bincount(seg_np.reshape(128 * 128).astype(int))
     expected_zeros = truth_set[0]
     expected_ones = truth_set[1]
+
     #  sanity check
     if ((count_zero_true + count_ones_true > total_elements)
-            or (expected_zeros + expected_zeros == total_elements)
+            or (expected_zeros + expected_ones != total_elements)
             or (count_ones_true > expected_ones)
             or (count_zero_true > expected_zeros)):
         print("error in calculation")
+
     success_all = sum_equals / (new_shape[0] * new_shape[1])
     sucecss_zeros = count_zero_true / expected_zeros
     success_ones = count_ones_true / expected_ones
