@@ -34,9 +34,9 @@ def cfg():
     batch_size = 1
     plot_loss = True
     checkpoint_path = 'checkpoints/v1'
-    is_save_model = True
-    model_load_path = None
-    # model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
+    is_save_model = False
+    # model_load_path = None
+    model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
     display_images = True
 
 
@@ -99,7 +99,7 @@ def split_dataset_to_train_and_test(loader, batch_size):
     return training_data, test_data
 
 
-def evaluate_image(i, image, segmentation):
+def evaluate_image(i, image, segmentation, mask):
     image_np = image.data.numpy()
     new_shape = (image_np.shape[1], image_np.shape[2])
     total_elements = new_shape[0] * new_shape[1]
@@ -162,8 +162,8 @@ def main(_run):
     # ------ Michals modification: split train and validation in advance ------ #
     # train and validation images should be placed in args.data_path_training and args.data_path_validation
     # last 4 images (#37-40) are used as validation
-    loader_train = EyeDataset(args.data_path_training, augment=True, normalization=True)
-    loader_val = EyeDataset(args.data_path_validation, augment=True, normalization=True)
+    loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
+    loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=True, normalization=True)
 
     # loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
@@ -187,7 +187,7 @@ def main(_run):
             image = net_out[i, :, :, :]
             if image[image > 0.5].size()[0] == 0:
                 print("all image values are below 0.5")
-            success_all, success_zero, success_ones = evaluate_image(i, image, segmentation)
+            success_all, success_zero, success_ones = evaluate_image(i, image, segmentation, mask[i,:,:,:])
             results.append(success_all)
             results_zero.append(success_zero)
             results_one.append(success_ones)
