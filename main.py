@@ -15,6 +15,7 @@ import logging
 import numpy as np
 from models.fc import FC
 from models.unet import UNET
+import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger().setLevel(logging.INFO)
@@ -35,8 +36,8 @@ def cfg():
     plot_loss = True
     checkpoint_path = 'checkpoints/v1'
     is_save_model = False
-    model_load_path = None
-    # model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
+    # model_load_path = None
+    model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
     display_images = True
 
 
@@ -155,6 +156,42 @@ def choose_model(args, training_data):
     model.load_state_dict(load)
     return model
 
+def evaluate_results(args, model, data):
+    num_images = 0
+    results = []
+    results_zero = []
+    results_one = []
+    total_images = len(data)
+    for i, (image_batch, mask, segmentation) in enumerate(data):
+        net_out = model(image_batch)
+        net_out = F.sigmoid(net_out)
+        for i in range(0, image_batch.shape[0]):
+            prediction = net_out[i, :, :, :]
+            if prediction[prediction > 0.5].size()[0] == 0:
+                print("all image values are below 0.5")
+            success_all, success_zero, success_ones = evaluate_image(i, prediction, segmentation, mask[i, :, :, :])
+            results.append(success_all)
+            results_zero.append(success_zero)
+            results_one.append(success_ones)
+            if num_images % int(total_images/2) == 1 and args.display_images:
+                fig = plt.figure()
+                a = fig.add_subplot(1, 2, 1)
+                im_pred = transforms.ToPILImage(mode='L')(prediction)
+                image_plot = plt.imshow(im_pred)
+                im_seg = transforms.ToPILImage(mode='L')(segmentation[i, :, :, :])
+                a.set_title('predidction')
+                plt.colorbar(ticks=[0.1, 0.3, 0.5, 0.7], orientation='horizontal')
+
+                a = fig.add_subplot(1, 2, 2)
+                plt.imshow(im_seg)
+                a.set_title('Segmentation')
+                plt.colorbar(ticks=[0.1, 0.3, 0.5, 0.7], orientation='horizontal')
+
+                plt.show()
+            num_images = num_images + 1
+    print("prediction success total {}, zeros {}, ones: {}".format(
+        np.average(results), np.average(results_zero), np.average(results_one)))
+
 
 @ex.automain
 def main(_run):
@@ -177,25 +214,6 @@ def main(_run):
 
     model = choose_model(args, training_data)
     # TEST
-    print("start segmentation on test")
-    num_images = 0
-    results = []
-    results_zero = []
-    results_one = []
-    for i, (image_batch, mask, segmentation) in enumerate(test_data):
-        net_out = model(image_batch)
-        net_out = F.sigmoid(net_out)
-        for i in range(0, image_batch.shape[0]):
-            prediction = net_out[i, :, :, :]
-            if prediction[prediction > 0.5].size()[0] == 0:
-                print("all image values are below 0.5")
-            success_all, success_zero, success_ones = evaluate_image(i, prediction, segmentation, mask[i,:,:,:])
-            results.append(success_all)
-            results_zero.append(success_zero)
-            results_one.append(success_ones)
-            if num_images % 10 == 0 and args.display_images:
-                transforms.ToPILImage(mode='L')(prediction).show()
-                transforms.ToPILImage(mode='L')(segmentation[i, :, :, :]).show()
-            num_images = num_images + 1
-    print("prediction success total {}, zeros {}, ones: {}".format(
-        np.average(results), np.average(results_zero), np.average(results_one)))
+    print("evaluate on training data")
+    evaluate_results(args, model, test_data)
+
