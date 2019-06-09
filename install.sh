@@ -18,3 +18,7 @@ wget https://bootstrap.pypa.io/get-pip.py && \
     rm get-pip.py
 for VERSION in ${PYTHON_VERSIONS}; do pip$VERSION install --upgrade pip; done
 sudo pip3.7 install virtualenv
+virtualenv .env
+
+#source .env/bin/activate
+#deactivate
