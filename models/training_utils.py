@@ -27,7 +27,7 @@ def train_model(args, model, training_data):
 
     # initialize the early_stopping object
 
-    early_stopping = EarlyStopping(verbose=True)
+    early_stopping = EarlyStopping(verbose=False)
 
     for i in range(1, args.num_epochs + 1):
         loss = train(i, model, training_data, optimizer, args)
