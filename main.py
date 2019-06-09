@@ -9,6 +9,8 @@ from sacred import Experiment
 from argparse import Namespace
 from torchvision import transforms
 
+from pytorchtools import EarlyStopping
+
 from analysis import plot_loss
 from load_data.eye_dataset import EyeDataset, EyeDatasetOverfitCorners, EyeDatasetOverfitCenter
 import logging
@@ -36,8 +38,8 @@ def cfg():
     plot_loss = True
     checkpoint_path = 'checkpoints/v1'
     is_save_model = False
-    # model_load_path = None
-    model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
+    model_load_path = None
+    # model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
     display_images = True
 
 
@@ -51,10 +53,23 @@ def train_model(args, model, training_data):
     logger.info("training model")
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     loss_history = []
+
+    # initialize the early_stopping object
+
+    early_stopping = EarlyStopping(verbose=True)
+
     for i in range(1, args.num_epochs + 1):
         loss = train(i, model, training_data, optimizer, args)
         loss_history.append(loss)
         print("loss in epoch %d is:" % i, loss)
+        # early_stopping needs the validation loss to check if it has decreased,
+        # and if it has, it will make a checkpoint of the current model
+        early_stopping(loss, model)
+
+        if early_stopping.early_stop:
+            print("Early stopping")
+            break
+
     if args.plot_loss:
         stats = {'loss_history': loss_history}
         plot_loss(stats)
@@ -65,6 +80,7 @@ def train_model(args, model, training_data):
 def train(epoch, model, dataset, optimizer, args):
     total_loss = 0
     model.train()  # sets the model in training mode
+
     for i, (image_batch, mask, segmentation) in enumerate(dataset):
         # if you want to see the images and the segmentation
         # transforms.ToPILImage(mode='RGB')(image_batch[0, :, :, :]).show()
@@ -179,7 +195,7 @@ def evaluate_results(args, model, data):
                 im_pred = transforms.ToPILImage(mode='L')(prediction)
                 image_plot = plt.imshow(im_pred)
                 im_seg = transforms.ToPILImage(mode='L')(segmentation[i, :, :, :])
-                a.set_title('predidction')
+                a.set_title('prediction')
                 plt.colorbar(ticks=[0.1, 0.3, 0.5, 0.7], orientation='horizontal')
 
                 a = fig.add_subplot(1, 2, 2)
