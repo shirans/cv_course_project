@@ -153,10 +153,10 @@ def evaluate_image(i, prediction, segmentation, mask):
 
 def save_model(args, epoch, model):
     state = model.state_dict()
-    logger.info("saving model to path:", )
     timestr = time.strftime("%Y%m%d-%H%M%S")
     path = os.path.join(args.checkpoint_path,
                         '{}'.format(timestr))
+    logger.info("saving model to path:", path)
     torch.save(state, path)
 
 
