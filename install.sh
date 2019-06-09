@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd cv_course_project
+# cd cv_course_project
 sudo apt update
 sudo apt install software-properties-common
 sudo add-apt-repository ppa:deadsnakes/ppa
