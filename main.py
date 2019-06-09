@@ -38,7 +38,7 @@ def cfg():
     batch_size = 1
     plot_loss = True
     checkpoint_path = 'checkpoints/v1'
-    is_save_model = False
+    is_save_model = True
     model_load_path = None
     # model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
     display_images = True
@@ -156,7 +156,7 @@ def save_model(args, epoch, model):
     timestr = time.strftime("%Y%m%d-%H%M%S")
     path = os.path.join(args.checkpoint_path,
                         '{}'.format(timestr))
-    logger.info("saving model to path:", path)
+    logger.info("saving model to path:".format(path))
     torch.save(state, path)
 
 
