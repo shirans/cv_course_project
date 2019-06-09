@@ -37,10 +37,10 @@ def cfg():
     num_epochs = 10000
     batch_size = 1
     plot_loss = True
-    checkpoint_path = 'checkpoints/v1'
+    models_output_path = 'model_outputs/v1'
     is_save_model = True
     model_load_path = None
-    # model_load_path = 'checkpoints/v1/20190601-170049_10kepoch_FC'
+    # model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
     display_images = True
 
 
@@ -75,7 +75,7 @@ def train_model(args, model, training_data):
         stats = {'loss_history': loss_history}
         plot_loss(stats)
     if args.is_save_model:
-        save_model(args, args.num_epochs, model)
+        save_model(args, model)
 
 
 def train(epoch, model, dataset, optimizer, args):
@@ -151,20 +151,20 @@ def evaluate_image(i, prediction, segmentation, mask):
     return success_all, sucecss_zeros, success_ones
 
 
-def save_model(args, epoch, model):
-    state = model.state_dict()
+def save_model(args, path, model):
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    path = os.path.join(args.checkpoint_path,
-                        '{}'.format(timestr))
+    model_output_path = os.path.join(args.models_output_path,
+                                     '{}_{}'.format(timestr, args.num_epochs))
+    state = model.state_dict()
     logger.info("saving model to path: {}".format(path))
-    torch.save(state, path)
+    torch.save(state, model_output_path)
 
 
 def choose_model(args, training_data):
     path = args.model_load_path
     if path is None:
         logger.info("creating a new model")
-        model = UNET()
+        model = FC()
         train_model(args, model, training_data)
         return model
     logger.info("loading model from path: {}".format(path))
