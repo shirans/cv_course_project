@@ -156,7 +156,7 @@ def save_model(args, epoch, model):
     timestr = time.strftime("%Y%m%d-%H%M%S")
     path = os.path.join(args.checkpoint_path,
                         '{}'.format(timestr))
-    logger.info("saving model to path:".format(path))
+    logger.info("saving model to path: {}".format(path))
     torch.save(state, path)
 
 
