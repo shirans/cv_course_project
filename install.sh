@@ -20,5 +20,10 @@ for VERSION in ${PYTHON_VERSIONS}; do pip$VERSION install --upgrade pip; done
 sudo pip3.7 install virtualenv
 virtualenv .env
 
-#source .env/bin/activate
+source .env/bin/activate
+
+python3 -m pip install --upgrade pip
+python3 -m pip install jupyter
+
+
 #deactivate
