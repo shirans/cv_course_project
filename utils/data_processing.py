@@ -25,7 +25,7 @@ def split_dataset_to_train_and_test(loader, batch_size):
     return training_data, test_data
 
 
-def load_model(args):
+def load_input(args):
     # ------ Michals modification: split train and validation in advance ------ #
     # train and validation images should be placed in args.data_path_training and args.data_path_validation
     # last 4 images (#37-40) are used as validation

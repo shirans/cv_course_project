@@ -35,7 +35,7 @@ def evaluate_results(args, model, data):
                 a.set_title('Segmentation')
                 plt.colorbar(ticks=[0.1, 0.3, 0.5, 0.7], orientation='horizontal')
 
-                plt.show(block=False)
+                plt.show(block=True)
             num_images = num_images + 1
     plt.show()
     print("prediction success total {}, zeros {}, ones: {}".format(
@@ -74,3 +74,10 @@ def evaluate_image(i, prediction, segmentation, mask):
     # print("prediction success total {}, zeros {}, ones: {}".format(
     #     success_all, sucecss_zeros, success_ones))
     return success_all, sucecss_zeros, success_ones
+
+
+def evaluate(args, model, training_data, validatoin_data):
+    print("evaluate on training data")
+    evaluate_results(args, model, training_data)
+    print("evaluate on validation data")
+    evaluate_results(args, model, validatoin_data)
