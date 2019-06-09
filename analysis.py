@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 # plot the loss history
-matplotlib.interactive(False)
+matplotlib.interactive(True)
 
 
 def plot_loss(stats):
@@ -11,4 +11,4 @@ def plot_loss(stats):
     plt.ylabel('training loss')
     plt.title('Training Loss history')
     plt.plot()
-    plt.show(block=True)
+    plt.show()
