@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-git clone https://github.com/shirans/cv_course_project.git
+
 cd cv_course_project
 sudo apt update
 sudo apt install software-properties-common
