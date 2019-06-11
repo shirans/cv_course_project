@@ -1,5 +1,7 @@
 data/*
 checkpoints/*
+.ipynb_checkpoints/*
+model_outputs/*
 .idea/
 .idea/*
 .idea/vcs.xml
