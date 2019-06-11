@@ -1,3 +1,4 @@
+import torch
 from sacred import Experiment
 from argparse import Namespace
 
@@ -28,21 +29,22 @@ def cfg():
     plot_loss = True
     models_output_path = 'model_outputs/v1'
     is_save_model = False
-    # model_load_path = None
-    model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
+    model_load_path = None
+    # model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
     # model_load_path = 'model_outputs/v1/20190609-194734_10000'
     display_images = True
     model_type = Models_types.FC
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = "cuda"
+    print("device:", device)
 
 
 @ex.automain
 def main(_run):
     args = Namespace(**_run.config)
+
     logger.info(args)
     training_data, validatoin_data = load_input(args)
     model = choose_model(args, training_data)
     # TEST
     evaluate(args, model, training_data, validatoin_data)
-
-
-

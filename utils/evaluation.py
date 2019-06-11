@@ -11,6 +11,7 @@ def evaluate_results(args, model, data):
     results_one = []
     total_images = len(data)
     for i, (image_batch, mask, segmentation) in enumerate(data):
+        image_batch = image_batch.to(args.device)
         net_out = model(image_batch)
         net_out = F.sigmoid(net_out)
         for i in range(0, image_batch.shape[0]):
@@ -35,7 +36,7 @@ def evaluate_results(args, model, data):
                 a.set_title('Segmentation')
                 plt.colorbar(ticks=[0.1, 0.3, 0.5, 0.7], orientation='horizontal')
 
-                plt.show(block=True)
+                plt.show(block=False)
             num_images = num_images + 1
     plt.show()
     print("prediction success total {}, zeros {}, ones: {}".format(

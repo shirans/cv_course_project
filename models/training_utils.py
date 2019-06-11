@@ -5,7 +5,6 @@ import torch
 from torch import nn as nn
 
 from analysis import plot_loss
-from models.fc import FC
 from pytorchtools import EarlyStopping
 import logging
 
@@ -56,6 +55,7 @@ def train(epoch, model, dataset, optimizer, args):
         # if you want to see the images and the segmentation
         # transforms.ToPILImage(mode='RGB')(image_batch[0, :, :, :]).show()
         # transforms.ToPILImage(mode='L')(segmentation[0, :, :, :]).show()
+        image_batch = image_batch.to(args.device)
         model.zero_grad()
         output = model(image_batch)
         loss = loss_func(output, segmentation, mask)
