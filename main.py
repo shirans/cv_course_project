@@ -24,7 +24,7 @@ def cfg():
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
     data_path_test = 'data/drive/test'
-    num_epochs = 3
+    num_epochs = 10000
     batch_size = 1
     plot_loss = True
     models_output_path = 'model_outputs/v1'
@@ -33,7 +33,7 @@ def cfg():
     # model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
     # model_load_path = 'model_outputs/v1/20190609-194734_10000'
     display_images = True
-    model_type = Models_types.FC
+    model_type = Models_types.UNET_V1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # device = "cuda"
     print("device:", device)

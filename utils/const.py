@@ -1,7 +1,7 @@
 from enum import Enum
 
 from models.fc import FC
-from models.unet import UNET
+from models.our_unet import Unet
 
 
 class Models_types(Enum):
@@ -13,4 +13,4 @@ def choose_type(model_type):
     if model_type == Models_types.FC:
         return FC()
     if model_type == Models_types.UNET_V1:
-        return UNET()
+        return Unet()
