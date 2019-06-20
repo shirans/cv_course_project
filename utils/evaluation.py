@@ -36,7 +36,7 @@ def evaluate_results(args, model, data):
                 a.set_title('Segmentation')
                 plt.colorbar(ticks=[0.1, 0.3, 0.5, 0.7], orientation='horizontal')
 
-                plt.show(block=False)
+                plt.show(block=True)
             num_images = num_images + 1
     plt.show()
     print("prediction success total {}, zeros {}, ones: {}".format(

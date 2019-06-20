@@ -12,10 +12,12 @@ import torchvision.transforms.functional as TF
 import random
 
 
-def pil_loader(path):
+def pil_loader(path, resize=False):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     with open(path, 'rb') as f:
         img = Image.open(f)
+        if resize: # issue during training
+            img = img.resize((512, 512), Image.ANTIALIAS)
         return img.convert('RGB')
 
 

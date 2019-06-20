@@ -2,7 +2,7 @@ import numpy as np
 from torch.utils.data import SubsetRandomSampler, DataLoader
 
 from load_data.eye_dataset import EyeDatasetOverfitCenter
-
+from load_data.eye_dataset import EyeDataset
 
 def split_dataset_to_train_and_test(loader, batch_size):
     validation_split = .2
@@ -29,13 +29,13 @@ def load_input(args):
     # ------ Michals modification: split train and validation in advance ------ #
     # train and validation images should be placed in args.data_path_training and args.data_path_validation
     # last 4 images (#37-40) are used as validation
-    loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
-    loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=True, normalization=True)
-    loader_test = EyeDatasetOverfitCenter(args.data_path_test, augment=True, normalization=True)
+    loader_train = EyeDataset(args.data_path_training, augment=True, normalization=True)
+    loader_val = EyeDataset(args.data_path_validation, augment=True, normalization=True)
+    loader_test = EyeDataset(args.data_path_test, augment=True, normalization=True)
     # loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
     # training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)
-    training_data = DataLoader(loader_train, batch_size=args.batch_size)
-    validatoin_data = DataLoader(loader_val, batch_size=args.batch_size)
-    test_data = DataLoader(loader_test, batch_size=args.batch_size)
-    return training_data, validatoin_data
+    training_data = DataLoader(loader_train, batch_size=args.batch_size, num_workers=4)
+    validation_data = DataLoader(loader_val, batch_size=args.batch_size, num_workers=4)
+    test_data = DataLoader(loader_test, batch_size=args.batch_size, num_workers=4)
+    return training_data, validation_data, test_data
