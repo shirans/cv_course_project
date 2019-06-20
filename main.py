@@ -30,7 +30,7 @@ def cfg():
     models_output_path = 'model_outputs/v1'
     is_save_model = False
     model_load_path = None
-    # model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
+    #model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
     # model_load_path = 'model_outputs/v1/20190609-194734_10000'
     display_images = True
     model_type = Models_types.UNET_V1
@@ -44,7 +44,7 @@ def main(_run):
     args = Namespace(**_run.config)
 
     logger.info(args)
-    training_data, validatoin_data = load_input(args)
+    training_data, validation_data, test_data = load_input(args)
     model = choose_model(args, training_data)
     # TEST
-    evaluate(args, model, training_data, validatoin_data)
+    evaluate(args, model, training_data, test_data)
