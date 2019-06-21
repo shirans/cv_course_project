@@ -77,8 +77,10 @@ def evaluate_image(i, prediction, segmentation, mask):
     return success_all, sucecss_zeros, success_ones
 
 
-def evaluate(args, model, training_data, validatoin_data):
+def evaluate(args, model, training_data, validation_data, test_data):
     print("evaluate on training data")
     evaluate_results(args, model, training_data)
     print("evaluate on validation data")
-    evaluate_results(args, model, validatoin_data)
+    evaluate_results(args, model, validation_data)
+    print("evaluate on test data")
+    evaluate_results(args, model, test_data)
