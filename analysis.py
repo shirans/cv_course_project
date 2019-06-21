@@ -7,8 +7,10 @@ matplotlib.interactive(True)
 
 def plot_loss(stats):
     plt.plot(stats['loss_history'])
-    plt.xlabel('iteration')
-    plt.ylabel('training loss')
-    plt.title('Training Loss history')
+    plt.plot(stats['loss_val_history'])
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss')
+    plt.title('Loss history')
+    plt.legend(['Training loss', 'Validation loss'])
     plt.plot()
     plt.show()

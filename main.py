@@ -26,9 +26,11 @@ def cfg():
     data_path_test = 'data/drive/test'
     num_epochs = 10000
     batch_size = 1
+    num_workers = 4
+    patience = 50
     plot_loss = True
     models_output_path = 'model_outputs/v1'
-    is_save_model = False
+    is_save_model = True
     model_load_path = None
     #model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
     # model_load_path = 'model_outputs/v1/20190609-194734_10000'
@@ -45,6 +47,6 @@ def main(_run):
 
     logger.info(args)
     training_data, validation_data, test_data = load_input(args)
-    model = choose_model(args, training_data)
+    model = choose_model(args, training_data, validation_data)
     # TEST
-    evaluate(args, model, training_data, test_data)
+    evaluate(args, model, training_data, validation_data, test_data)

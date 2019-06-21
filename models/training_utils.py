@@ -19,21 +19,22 @@ def loss_func(output, segmentation, mask):
     return (loss_results * mask).mean()
 
 
-def train_model(args, model, training_data):
+def train_model(args, model, training_data, validation_data):
     logger.info("training model")
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     loss_history = []
-
+    loss_val_history = []
     # initialize the early_stopping object
 
-    early_stopping = EarlyStopping(verbose=False)
+    early_stopping = EarlyStopping(verbose=False, patience=args.patience)
 
     for i in range(1, args.num_epochs + 1):
-        loss = train(i, model, training_data, optimizer, args)
+        loss, loss_val = train(i, model, training_data, optimizer, args, validation_data)
         loss_history.append(loss)
-        print("loss in epoch %d is:" % i, loss)
-        # early_stopping needs the validation loss to check if it has decreased,
-        # and if it has, it will make a checkpoint of the current model
+        loss_val_history.append(loss_val)
+        print("Training loss in epoch %d is:" % i, loss)
+        print("Validation loss in epoch %d is:" % i, loss_val)
+        # early stopping
         early_stopping(loss, model)
 
         if early_stopping.early_stop:
@@ -41,14 +42,15 @@ def train_model(args, model, training_data):
             break
 
     if args.plot_loss:
-        stats = {'loss_history': loss_history}
+        stats = {'loss_history': loss_history, 'loss_val_history': loss_val_history}
         plot_loss(stats)
     if args.is_save_model:
         save_model(args, model)
 
 
-def train(epoch, model, dataset, optimizer, args):
+def train(epoch, model, dataset, optimizer, args, validation_data):
     total_loss = 0
+    total_val_loss = 0
     model.train()  # sets the model in training mode
 
     for i, (image_batch, mask, segmentation) in enumerate(dataset):
@@ -62,8 +64,12 @@ def train(epoch, model, dataset, optimizer, args):
         loss.backward()
         total_loss += loss.item()
         optimizer.step()
+    for i, (image_batch, mask, segmentation) in enumerate(validation_data):
+        output = model(image_batch)
+        loss_val = loss_func(output, segmentation, mask)
+        total_val_loss += loss_val.item()
 
-    return total_loss
+    return total_loss, total_val_loss
 
 
 def save_model(args, model):
@@ -75,13 +81,13 @@ def save_model(args, model):
     torch.save(state, model_output_path)
 
 
-def choose_model(args, training_data):
+def choose_model(args, training_data, validation_data):
     path = args.model_load_path
     if path is None:
         logger.info("creating a new model")
         choose_type(args.model_type)
         model = choose_type(args.model_type)
-        train_model(args, model, training_data)
+        train_model(args, model, training_data, validation_data)
         return model
     logger.info("loading model from path: {}".format(path))
     model = choose_type(args.model_type)
