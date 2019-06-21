@@ -10,6 +10,13 @@ from PIL import Image
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
 import random
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 
 def pil_loader(path, resize=False):
@@ -29,9 +36,12 @@ def normalize(tensor):
 
 
 def make_dataset(folder):
-    masks = Path(folder).glob('mask/**/*.gif')
-    raw = Path(folder).glob('images/**/*.tif')
-    segmentation = Path(folder).glob('1st_manual/**/*.gif')
+    folder_abs = os.path.abspath(folder)
+    logger.info("path images:{}".format(folder_abs))
+
+    masks = Path(folder_abs).glob('mask/**/*.gif')
+    raw = Path(folder_abs).glob('images/**/*.tif')
+    segmentation = Path(folder_abs).glob('1st_manual/**/*.gif')
 
     d = {}
     for m in masks:
