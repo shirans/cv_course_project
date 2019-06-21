@@ -10,6 +10,7 @@ def evaluate_results(args, model, data):
     results_zero = []
     results_one = []
     total_images = len(data)
+    print("data size:{}".format(len(data)))
     for i, (image_batch, mask, segmentation) in enumerate(data):
         image_batch = image_batch.to(args.device)
         net_out = model(image_batch)
