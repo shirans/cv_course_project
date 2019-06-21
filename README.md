@@ -19,3 +19,8 @@ upload files to the instance:
 where cs231n-for-gpu is the name of the instance
 gcloud compute scp --recurse data/drive cs231n-for-gpu://home/shiran.s/cv_course_project/data
 pip3 install -r requirements.txt
+
+
+
+#how to set up a GC machine: https://nirbenz.github.io/gce-tutorial/?fbclid=IwAR3SvNXBPxayIuM9T94SIa-qteWKUxkbQzf7TEg4CAu6R2AWXxbGwTQT3Dw
+# how to add GPU: 

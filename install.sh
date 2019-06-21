@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # cd cv_course_project
+# chmod +x install.sh so it'll be runnable
 sudo apt update
 sudo apt install software-properties-common
 sudo add-apt-repository ppa:deadsnakes/ppa
@@ -25,5 +26,14 @@ source .env/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install jupyter
 
+jupyter notebook --generate-config
+
+pip3 install -r requirements.txt
 
 #deactivate
+
+# when editing ~/.jupyter/jupyter_notebook_config.py
+#c = get_config()
+#c.NotebookApp.ip = '0.0.0.0'
+#c.NotebookApp.open_browser = False
+#c.NotebookApp.port = 8888
