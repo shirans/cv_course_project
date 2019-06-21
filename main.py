@@ -24,7 +24,7 @@ def cfg():
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
     data_path_test = 'data/drive/test'
-    num_epochs = 10000
+    num_epochs = 10
     batch_size = 1
     plot_loss = True
     models_output_path = 'model_outputs/v1'
