@@ -26,7 +26,7 @@ def train_model(args, model, training_data, validation_data):
     loss_val_history = []
     # initialize the early_stopping object
 
-    early_stopping = EarlyStopping(verbose=False, patience=args.patience)
+    early_stopping = EarlyStopping(verbose=False, patience=args.patience, epsilon=args.epsilon)
 
     for i in range(1, args.num_epochs + 1):
         loss, loss_val = train(i, model, training_data, optimizer, args, validation_data)
@@ -35,7 +35,7 @@ def train_model(args, model, training_data, validation_data):
         print("Training loss in epoch %d is:" % i, loss)
         print("Validation loss in epoch %d is:" % i, loss_val)
         # early stopping
-        early_stopping(loss, model)
+        early_stopping(loss_val, model)
 
         if early_stopping.early_stop:
             print("Early stopping")
