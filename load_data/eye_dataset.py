@@ -19,7 +19,7 @@ logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def pil_loader(path, resize=False):
+def pil_loader(path, resize=True):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     with open(path, 'rb') as f:
         img = Image.open(f)
@@ -62,7 +62,8 @@ def make_dataset(folder):
 
 
 class EyeDataset(Dataset):
-    def __init__(self, folder, augment=False, normalization=True):
+    def __init__(self, folder, augment=False, normalization=True, is_crop = True):
+        self.is_crop = is_crop
         self.normalization = normalization
         self.samples = make_dataset(folder)
         self.augment = augment
@@ -76,10 +77,11 @@ class EyeDataset(Dataset):
         mask = TF.to_grayscale(pil_loader(mask_path))
         segmentation = TF.to_grayscale(pil_loader(segmentation_path))
 
-        i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(128, 128))
-        image = TF.crop(image, i, j, h, w)
-        mask = TF.crop(mask, i, j, h, w)
-        segmentation = TF.crop(segmentation, i, j, h, w)
+        if self.is_crop:
+            i, j, h, w = transforms.RandomCrop.get_params(image, output_size=(128, 128))
+            image = TF.crop(image, i, j, h, w)
+            mask = TF.crop(mask, i, j, h, w)
+            segmentation = TF.crop(segmentation, i, j, h, w)
 
         if self.augment:
             if random.random() > 0.5:

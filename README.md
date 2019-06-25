@@ -23,4 +23,4 @@ pip3 install -r requirements.txt
 
 
 #how to set up a GC machine: https://nirbenz.github.io/gce-tutorial/?fbclid=IwAR3SvNXBPxayIuM9T94SIa-qteWKUxkbQzf7TEg4CAu6R2AWXxbGwTQT3Dw
-# how to add GPU: 
+# how to add GPU: https://nirbenz.github.io/gce-cuda/

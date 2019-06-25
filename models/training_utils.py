@@ -64,12 +64,14 @@ def train(epoch, model, dataset, optimizer, args, validation_data):
         loss.backward()
         total_loss += loss.item()
         optimizer.step()
+
+    model.eval()
     for i, (image_batch, mask, segmentation) in enumerate(validation_data):
         output = model(image_batch)
         loss_val = loss_func(output, segmentation, mask)
         total_val_loss += loss_val.item()
 
-    return total_loss, total_val_loss
+    return total_loss/len(dataset), total_val_loss/len(validation_data)
 
 
 def save_model(args, model):
