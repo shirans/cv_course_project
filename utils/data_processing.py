@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from torch.utils.data import SubsetRandomSampler, DataLoader
 
 from load_data.eye_dataset import EyeDatasetOverfitCenter
@@ -29,13 +30,14 @@ def load_input(args):
     # ------ Michals modification: split train and validation in advance ------ #
     # train and validation images should be placed in args.data_path_training and args.data_path_validation
     # last 4 images (#37-40) are used as validation
-    # loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
-    # loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=False, normalization=True)
-    # loader_test = EyeDatasetOverfitCenter(args.data_path_test, augment=False, normalization=True)
-    loader_train = EyeDataset(args.data_path_training, augment=True, normalization=True, is_crop=True)
-    loader_val = EyeDataset(args.data_path_validation, augment=False, normalization=True, is_crop=False)
-    loader_test = EyeDataset(args.data_path_test, augment=False, normalization=True, is_crop=False)
+    loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
+    loader_test = EyeDatasetOverfitCenter(args.data_path_test, augment=False, normalization=True)
+    # loader_train = EyeDataset(args.data_path_training, augment=True, normalization=True, is_crop=True)
+    # loader_test = EyeDataset(args.data_path_test, augment=False, normalization=True, is_crop=False)
 
+    split = torch.utils.data.random_split(loader_train, (14, 3))
+    loader_train = split[0]
+    loader_val = split[1]
     # loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)
     # training_data, test_data = split_dataset_to_train_and_test(loader, args.batch_size)

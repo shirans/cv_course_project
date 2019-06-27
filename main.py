@@ -20,7 +20,6 @@ ex.logger = logger
 
 @ex.config
 def cfg():
-    data_path = 'data/drive/training'
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
     data_path_test = 'data/drive/test'
