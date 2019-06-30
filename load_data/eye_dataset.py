@@ -1,6 +1,6 @@
 import numbers
+from abc import ABC
 
-import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import os
@@ -12,7 +12,6 @@ import torchvision.transforms.functional as TF
 import random
 import logging
 
-
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger().setLevel(logging.INFO)
 
@@ -23,7 +22,7 @@ def pil_loader(path, resize=True):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     with open(path, 'rb') as f:
         img = Image.open(f)
-        if resize: # issue during training
+        if resize:  # issue during training
             img = img.resize((512, 512), Image.ANTIALIAS)
         return img.convert('RGB')
 
@@ -61,13 +60,22 @@ def make_dataset(folder):
     return samples
 
 
-class EyeDataset(Dataset):
-    def __init__(self, folder, augment=False, normalization=True, is_crop = True):
+class DriveDataset(Dataset, ABC):
+    def __init__(self, folder, augment=False, normalization=True, is_crop=True):
         self.is_crop = is_crop
         self.normalization = normalization
         self.samples = make_dataset(folder)
         self.augment = augment
 
+
+def normalize_if_defined(normalization, image):
+    tensor = TF.to_tensor(image)
+    if normalization:
+        return normalize(tensor)
+    return tensor
+
+
+class EyeDataset(DriveDataset):
     def __getitem__(self, idx):
         mask_path = self.samples[idx]['mask']
         segmentation_path = self.samples[idx]['segmentation']
@@ -83,31 +91,19 @@ class EyeDataset(Dataset):
             mask = TF.crop(mask, i, j, h, w)
             segmentation = TF.crop(segmentation, i, j, h, w)
 
-        if self.augment:
-            if random.random() > 0.5:
-                image = TF.vflip(image)
-                mask = TF.vflip(mask)
-                segmentation = TF.vflip(segmentation)
+        image, mask, segmentation = augment(self.augment, image, mask, segmentation)
 
-            if random.random() > 0.5:
-                image = TF.hflip(image)
-                mask = TF.hflip(mask)
-                segmentation = TF.hflip(segmentation)
-
-        tensor = TF.to_tensor(image)
-        if self.normalization:
-            tensor = normalize(tensor)
+        tensor = normalize_if_defined(self.normalization, image)
         return tensor, TF.to_tensor(mask), TF.to_tensor(segmentation)
 
     def __len__(self):
         return len(self.samples)
 
 
-class EyeDatasetOverfitCorners(Dataset):
-    def __init__(self, folder, augment=False):
-        self.samples = make_dataset(folder)
-        self.augment = augment
+class EyeDatasetOverfitCorners(DriveDataset):
+    def __init__(self, folder, augment=False, normalization=True, is_crop=True):
         self.crop = transforms.FiveCrop(128)
+        super().__init__(folder, augment, normalization, is_crop)
 
     def __getitem__(self, idx):
         mask_path = self.samples[idx]['mask']
@@ -130,28 +126,32 @@ class EyeDatasetOverfitCorners(Dataset):
         mask = mask_crops[rand_idx - 1]
         segmentation = segmentation_crops[rand_idx - 1]
 
-        if self.augment:
-            if random.random() > 0.5:
-                image = TF.vflip(image)
-                mask = TF.vflip(mask)
-                segmentation = TF.vflip(segmentation)
-
-            if random.random() > 0.5:
-                image = TF.hflip(image)
-                mask = TF.hflip(mask)
-                segmentation = TF.hflip(segmentation)
-
-        return TF.to_tensor(image), TF.to_tensor(mask), TF.to_tensor(segmentation)
+        image, mask, segmentation = augment(self.augment, image, mask, segmentation)
+        tensor = normalize_if_defined(self.normalization, image)
+        return tensor, TF.to_tensor(mask), TF.to_tensor(segmentation)
 
     def __len__(self):
         return len(self.samples)
 
 
-class EyeDatasetOverfitCenter(Dataset):
-    def __init__(self, folder, augment=False, normalization=True):
-        self.normalization = normalization
-        self.samples = make_dataset(folder)
-        self.augment = augment
+def augment(augment, image, mask, segmentation):
+    if augment:
+        if random.random() > 0.5:
+            image = TF.vflip(image)
+            mask = TF.vflip(mask)
+            segmentation = TF.vflip(segmentation)
+
+        if random.random() > 0.5:
+            image = TF.hflip(image)
+            mask = TF.hflip(mask)
+            segmentation = TF.hflip(segmentation)
+    return image, mask, segmentation
+
+
+class EyeDatasetOverfitCenter(DriveDataset):
+
+    def __init__(self, folder, augment=False, normalization=True, is_crop=True):
+        super().__init__(folder, augment, normalization, is_crop)
         self.crop = transforms.CenterCrop(128)
 
     def __getitem__(self, idx):
@@ -167,20 +167,9 @@ class EyeDatasetOverfitCenter(Dataset):
         mask = plus_crop(mask, 128)
         segmentation = plus_crop(segmentation, 128)
 
-        if self.augment:
-            if random.random() > 0.5:
-                image = TF.vflip(image)
-                mask = TF.vflip(mask)
-                segmentation = TF.vflip(segmentation)
+        image, mask, segmentation = augment(self.augment, image, mask, segmentation)
 
-            if random.random() > 0.5:
-                image = TF.hflip(image)
-                mask = TF.hflip(mask)
-                segmentation = TF.hflip(segmentation)
-
-        tensor = TF.to_tensor(image)
-        if self.normalization:
-            tensor = normalize(tensor)
+        tensor = normalize_if_defined(self.normalization, image)
         return tensor, TF.to_tensor(mask), TF.to_tensor(segmentation)
 
     def __len__(self):

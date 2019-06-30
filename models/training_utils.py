@@ -32,13 +32,12 @@ def train_model(args, model, training_data, validation_data):
         loss, loss_val = train(i, model, training_data, optimizer, args, validation_data)
         loss_history.append(loss)
         loss_val_history.append(loss_val)
-        print("Training loss in epoch %d is:" % i, loss)
-        print("Validation loss in epoch %d is:" % i, loss_val)
+        print("Training loss in epoch {} is: {}. Validation loss is: {}".format(i, loss,loss_val))
         # early stopping
         early_stopping(loss_val, model)
 
         if early_stopping.early_stop:
-            print("Early stopping")
+            print("Early stopping at epoch {}",i)
             break
 
     if args.plot_loss:
@@ -89,7 +88,11 @@ def choose_model(args, training_data, validation_data):
         logger.info("creating a new model")
         choose_type(args.model_type)
         model = choose_type(args.model_type)
+        start = time.time()
         train_model(args, model, training_data, validation_data)
+        end = time.time()
+        logger.info("time took to train:{}".format(end - start))
+
         return model
     logger.info("loading model from path: {}".format(path))
     model = choose_type(args.model_type)

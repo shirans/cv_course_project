@@ -4,6 +4,7 @@ from argparse import Namespace
 
 import logging
 
+from load_data.eye_dataset import EyeDatasetOverfitCenter
 from models.training_utils import choose_model
 from utils.const import Models_types
 from utils.data_processing import load_input
@@ -23,23 +24,24 @@ def cfg():
     data_path_training = 'data/drive/training'
     data_path_validation = 'data/drive/validation'
     data_path_test = 'data/drive/test'
-    num_epochs = 100
+    num_epochs = 10000
     batch_size = 1
     num_workers = 4
     patience = 50 # early stopping
     epsilon = 0.0005 # early stopping
     plot_loss = True
     models_output_path = 'model_outputs/v1'
-    is_save_model = True
+    is_save_model = False
     # model_load_path = None
     # model_load_path = 'model_outputs/v1/20190601-170049_10kepoch_FC'
     # model_load_path = 'model_outputs/v1/20190609-194734_10000'
-    model_load_path = 'model_outputs/v1/20190625-194432_100'
-    # model_load_path = None
+    # model_load_path = 'model_outputs/v1/20190625-194432_100'
+    model_load_path = None
     display_images = True
     model_type = Models_types.UNET_V1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # device = "cuda"
+    loader_type=EyeDatasetOverfitCenter
     print("device:", device)
 
 
