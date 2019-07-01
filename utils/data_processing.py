@@ -33,9 +33,9 @@ def load_input(args):
     # loader_train = EyeDatasetOverfitCenter(args.data_path_training, augment=True, normalization=True)
     # loader_val = EyeDatasetOverfitCenter(args.data_path_validation, augment=False, normalization=True)
     # loader_test = EyeDatasetOverfitCenter(args.data_path_test, augment=False, normalization=True)
-    loader_train = args.loader_type(args.data_path_training, augment=True, normalization=True)
-    loader_val = args.loader_type(args.data_path_validation, augment=False, normalization=True)
-    loader_test = args.loader_type(args.data_path_test, augment=False, normalization=True)
+    loader_train = args.loader_type(args.data_path_training, augment=True, normalization=True, is_crop=True)
+    loader_val = args.loader_type(args.data_path_validation, augment=False, normalization=True, is_crop=False)
+    loader_test = args.loader_type(args.data_path_test, augment=False, normalization=True, is_crop=False)
 
     # loader = EyeDataset(args.data_path, augment=True)
     ## training_data = DataLoader(loader, shuffle=True, batch_size=1, sampler=train_sampler)

@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from matplotlib import pyplot as plt
 from torch.nn import functional as F
 from torchvision import transforms
@@ -49,7 +50,6 @@ def evaluate_image(i, prediction, segmentation, mask):
     new_shape = (prediction_np.shape[1], prediction_np.shape[2])
     total_elements = new_shape[0] * new_shape[1]
     # reshape from (1, 128, 128 ) to (128,128)
-    prediction_np = prediction_np.reshape(new_shape)
     # if value > 0.5 category is 1 else 0
     prediction_np = np.where(prediction_np > 0.5, 1, 0)
     seg_np = segmentation[i, :, :, :].data.numpy().reshape(new_shape)
@@ -59,7 +59,7 @@ def evaluate_image(i, prediction, segmentation, mask):
     # correct prediction by category
     count_ones_true = ((prediction_np == 1) & (equality)).sum()
     count_zero_true = ((prediction_np == 0) & (equality)).sum()
-    truth_set = np.bincount(seg_np.reshape(128 * 128).astype(int))
+    truth_set = np.bincount(seg_np.reshape(new_shape[0] * new_shape[1]).astype(int))
     expected_zeros = truth_set[0]
     expected_ones = truth_set[1]
 
