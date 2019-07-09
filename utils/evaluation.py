@@ -3,7 +3,6 @@ import torch
 from matplotlib import pyplot as plt
 from torch.nn import functional as F
 from torchvision import transforms
-import numpy as np
 from sklearn import metrics
 from sklearn.metrics import roc_curve, auc
 
@@ -102,7 +101,7 @@ def evaluate_results(args, model, data):
             results.append(success_all)
             results_zero.append(success_zero)
             results_one.append(success_ones)
-            if args.display_images and num_images % int(total_images / 2) == 1:
+            if args.display_images and num_images % 3 == 0:# int(total_images / 2) == 1:
                 display_img(i, prediction, segmentation)
             num_images = num_images + 1
     plt.show()
@@ -172,11 +171,11 @@ def get_expected_bin_counts(seg_np, mask_arr, total_elements):
 
 
 def evaluate(args, model, training_data, validation_data, test_data):
-    print("evaluate on training data")
+    print("Evaluate on training data")
     evaluate_results(args, model, training_data)
-    print("evaluate on validation data")
+    print("Evaluate on validation data")
     evaluate_results(args, model, validation_data)
-    print("evaluate on test data")
+    print("Evaluate on test data")
     evaluate_results(args, model, test_data)
 
     plot_roc_segmentation(args, model, training_data, validation_data, test_data)

@@ -28,7 +28,7 @@ def cfg():
     batch_size = 1
     num_workers = 4
     patience = 50  # early stopping
-    epsilon = 0.0005  # early stopping
+    epsilon = 0.001  # early stopping
     plot_loss = True
     models_output_path = 'model_outputs/v1'
     is_save_model = True

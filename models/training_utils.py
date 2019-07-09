@@ -102,7 +102,6 @@ def train_epoch(epoch, model, dataset, optimizer, args, validation_data):
         model.zero_grad()
         output = model(image_batch)
         f1_score = f1_score_func(output, segmentation, mask)
-        #f1_score.backward()
         total_f1_score += f1_score.item()
 
         loss = loss_func(output, segmentation, mask)
