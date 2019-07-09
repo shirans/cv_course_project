@@ -3,7 +3,84 @@ import torch
 from matplotlib import pyplot as plt
 from torch.nn import functional as F
 from torchvision import transforms
+from sklearn import metrics
+from sklearn.metrics import roc_curve, auc
 
+
+def roc(y_true, pred):
+    fpr, tpr, thresholds = roc_curve(y_true, pred)
+    auc_res = auc(fpr, tpr)
+    return fpr, tpr, thresholds, auc_res
+
+
+def map_to_binary(x):
+    # return math.sqrt(x)
+    return x > 0.5
+
+
+def plot_roc_segmentation(args, model, data, validation_data, test_data):
+    f = lambda x: 1 if x > 0.5 else 0
+    vfunc = np.vectorize(f)
+    all_segmentation_train, all_predictions_train = build_prediction_auc(args, data, model, vfunc)
+    all_segmentation_val, all_predictions_val = build_prediction_auc(args, validation_data, model, vfunc)
+    all_segmentation_test, all_predictions_test = build_prediction_auc(args, test_data, model, vfunc)
+    ax = build_plot()
+    append_roc(all_segmentation_train, all_predictions_train, ax, 'darkorange','train')
+    append_roc(all_segmentation_val, all_predictions_val, ax, 'lightseagreen','val')
+    append_roc(all_segmentation_test, all_predictions_test, ax, 'indigo','test')
+    plt.show(block=True)
+
+
+def build_prediction_auc(args, data, model, vfunc):
+    all_predictions = []
+    all_segmentation = []
+    for i, (image_batch, mask, segmentation) in enumerate(data):
+        image_batch = image_batch.to(args.device)
+        net_out = model(image_batch)
+        net_out = F.sigmoid(net_out)
+        for i in range(0, image_batch.shape[0]):
+            prediction = net_out[i, :, :, :]
+            segmentation = segmentation[i, :, :, :]
+            prediction = prediction.data.numpy().ravel()
+            segmentation = segmentation.data.numpy().ravel()
+            segmentation = vfunc(segmentation)
+            all_predictions.extend(prediction.tolist())
+            all_segmentation.extend(segmentation.tolist())
+    return all_segmentation, all_predictions
+
+
+def build_plot():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    ax.set_xlim([0.0, 1.0])
+    ax.set_xlim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('Receiver operating characteristic example')
+    ax.legend(loc="lower right")
+    return ax
+
+
+def append_roc(y_true, pred, ax, color, type):
+    fpr, tpr, thresholds, auc_res = roc(y_true, pred)
+    ax.plot(fpr, tpr, color=color,
+            lw=2, label='ROC curve {0}(area = {1:.2f})'.format(type, auc_res))
+    ax.legend()
+
+
+def plot_roc(y_true, pred):
+    fpr, tpr, thresholds, auc_res = roc(y_true, pred)
+    fig, ax = plt.subplots()
+    ax.plot(fpr, tpr, color='darkorange',
+            lw=2, label='ROC curve (area = %0.2f)' % auc_res)
+    ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    ax.set_xlim([0.0, 1.0])
+    ax.set_xlim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('Receiver operating characteristic example')
+    ax.legend(loc="lower right")
+    plt.show(block=True)
 
 def evaluate_results(args, model, data):
     num_images = 0
@@ -100,3 +177,5 @@ def evaluate(args, model, training_data, validation_data, test_data):
     evaluate_results(args, model, validation_data)
     print("Evaluate on test data")
     evaluate_results(args, model, test_data)
+
+    plot_roc_segmentation(args, model, training_data, validation_data, test_data)
