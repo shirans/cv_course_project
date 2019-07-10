@@ -98,6 +98,7 @@ def train_epoch(epoch, model, dataset, optimizer, args, validation_data):
         # if you want to see the images and the segmentation
         # transforms.ToPILImage(mode='RGB')(image_batch[0, :, :, :]).show()
         # transforms.ToPILImage(mode='L')(segmentation[0, :, :, :]).show()
+
         image_batch = image_batch.to(args.device)
         model.zero_grad()
         output = model(image_batch)

@@ -1,5 +1,6 @@
 import numbers
 from abc import ABC
+import torch
 
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
@@ -94,7 +95,12 @@ class EyeDataset(DriveDataset):
         image, mask, segmentation = augment(self.augment, image, mask, segmentation)
 
         tensor = normalize_if_defined(self.normalization, image)
-        return tensor, TF.to_tensor(mask), TF.to_tensor(segmentation)
+        segmentation =  TF.to_tensor(segmentation)
+        ## Train as the segmentation is binary (0-no vessel, 1-vessel)
+        # x = torch.ones(segmentation.size(1), segmentation.size(2))
+        # y = torch.zeros(segmentation.size(1), segmentation.size(2))
+        # segmentation = torch.where(segmentation > 0.5, x, y)
+        return tensor, TF.to_tensor(mask), segmentation
 
     def __len__(self):
         return len(self.samples)
