@@ -32,8 +32,8 @@ def cfg():
     plot_loss = True
     models_output_path = 'model_outputs/v1'
     is_save_model = True
-    # model_load_path = None
-    model_load_path = 'model_outputs/v1/20190701-091847_10000_UNET_EYEDATASET'
+    model_load_path = None
+    #model_load_path = 'model_outputs/v1/20190701-091847_10000_UNET_EYEDATASET'
     display_images = True
     model_type = Models_types.UNET_V1
     # model_type = Models_types.FC
